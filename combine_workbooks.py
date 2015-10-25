@@ -3,9 +3,6 @@
 import os
 from collections import defaultdict
 
-import xlrd
-import xlwt
-
 def isfloat(string):
   try:
     float(string)
@@ -50,6 +47,8 @@ def parse_sheet(sheet):
         r += 1  # go to next row
 
 def parse_workbooks(dir_path):
+    import xlrd
+
     filenames = [fn for fn in sorted(os.listdir(dir_path)) if fn.endswith('.xls')]
     print('Found', len(filenames), 'workbooks')
 
@@ -66,22 +65,24 @@ def parse_workbooks(dir_path):
 
     return data
 
-def write_to_workbook(data, filename):
+
+def write_to_workbook(wb_data, filename):
+    import xlwt
     wb = xlwt.Workbook()
 
-    for sheet_name, sheet_data in data.items():
-        #TODO fix data cap
-        sheet_data = sheet_data[:65536]
+    for sheet_name, rows in wb_data.items():
+        #TODO fix data cap by using xlsx instead of xls
+        if len(rows) > 65536:
+            print('WARNING: Capping rows for sheet "%s" (xls only supports 65536 rows per sheet)' % sheet_name) 
+            rows = rows[:65536]
         sheet = wb.add_sheet(sheet_name)
-        r = 0  # row index
-        for region1, region2, year, val in sheet_data:
-            sheet.write(r, 0, region1)
-            sheet.write(r, 1, region2)
-            sheet.write(r, 2, year)
-            sheet.write(r, 3, val)
-            r += 1
+        for r, row in enumerate(rows):
+            for c, val in enumerate(row):
+                sheet.write(r, c, val)
 
-    wb.save(filename)
+    wb.save(filename + ('.xls' if not filename.endswith('.xls') else ''))
+
+
 
 
 if __name__ == '__main__':
