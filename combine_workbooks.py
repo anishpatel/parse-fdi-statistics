@@ -66,7 +66,7 @@ def parse_workbooks(dir_path):
     return data
 
 
-def write_to_workbook(wb_data, filename):
+def write_xls(wb_data, filename):
     import xlwt
     wb = xlwt.Workbook()
 
@@ -83,17 +83,26 @@ def write_to_workbook(wb_data, filename):
     wb.save(filename + ('.xls' if not filename.endswith('.xls') else ''))
 
 
+def write_csv(rows, filename):
+    if not filename.endswith('.csv'):
+        filename += '.csv'
+
+    with open(filename, 'w') as f:
+        for row in rows:
+            f.write(','.join((str(v) for v in row))+'\n')
 
 
 if __name__ == '__main__':
 
     input_dir = 'fdi-workbooks'
-    output_filename = 'all_data.xls'
+    output_filename_prefix = 'all_data'
 
     print('==> Parsing data from', input_dir)
     data = parse_workbooks(input_dir)
     print('==> Parsing data done')
 
-    print('==> Writing data to workbook', output_filename)
-    write_to_workbook(data, output_filename)
+    for sheet_name, rows in data.items():
+        filename = '%s-%s.csv' % (output_filename_prefix, sheet_name)
+        print('==> Writing data to csv', filename)
+        write_csv(rows, filename)
     print('==> Writing data done')
