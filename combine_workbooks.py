@@ -113,13 +113,20 @@ def write_xls(wb_data, filename):
     wb.save(filename + ('.xls' if not filename.endswith('.xls') else ''))
 
 
-def write_csv(rows, filename):
-    if not filename.endswith('.csv'):
-        filename += '.csv'
-
+def write_csv(rows, filename, delim=','):
     with open(filename, 'w') as f:
-        for row in rows:
-            f.write(','.join((str(v) for v in row))+'\n')
+        for row_ind, row in enumerate(rows):
+            str_vals = [None] * len(row)
+            for i, val in enumerate(row):
+                str_val = str(val)
+                if not str_val:
+                    print('WARNING: Blank entry found for line %d' % (row_ind+1))
+                str_val_no_delim = str_val.replace(delim, '')
+                if len(str_val) < len(str_val_no_delim):
+                    warn_msg = 'WARNING: Replaced entry "%s" with entry "%s" (removed delimitter "%s")'
+                    print(warn_msg % (str_val, str_val_no_delim, delim))
+                str_vals[i] = str_val_no_delim
+            f.write(delim.join(str_vals)+'\n')
 
 
 if __name__ == '__main__':
