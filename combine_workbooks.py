@@ -10,8 +10,8 @@ def isfloat(string):
   except ValueError:
     return False
 
-def parse_sheet(sheet):
-    region1 = sheet.cell_value(0, 0)
+def parse_sheet(sheet, region1=None):
+    region1 = region1 or sheet.cell_value(0, 0)
             
     ## Find column numbers for years ##
     r = 4  # row index
@@ -58,9 +58,39 @@ def parse_workbooks(dir_path):
     for filename in filenames:
         wb_path = os.path.join(dir_path, filename)
         with xlrd.open_workbook(wb_path) as wb:
+            ## Figure out consistent name for region1 ##
+            region1_candidates = set(s.cell_value(0, 0).strip() for s in wb.sheets() if s.cell_value(0, 0))
+            if len(region1_candidates) == 1:
+                ## Only 1 unique region name found, so use that ##
+                region1 = region1_candidates.pop()
+            elif len(region1_candidates) < 1:
+                ## No region name found ##
+                # Try to find 3-letter country code in filename
+                i1 = filename.rfind('_')
+                i2 = filename.rfind('.')
+                if i1 >= 0 and i2 >= 0 and i1 < i2:
+                    region1 = filename[i1+1:i2]
+                else:
+                    # Couldn't find region name, so just use filename
+                    region1 = filename
+            elif len(region1_candidates) > 1:
+                ## Multiple different region names found ##
+                # Remove any that contain commas
+                region1_candidates_2 = set(r1 for r1 in region1_candidates if not ',' in r1)
+                if len(region1_candidates_2) == 1:
+                    # Only 1 unique region name found, so use that
+                    region1 = region1_candidates_2.pop()
+                elif len(region1_candidates_2) < 1:
+                    # No region name without commas exists, so just pick one
+                    region1 = region1_candidates.pop()
+                elif len(region1_candidates_2) > 1:
+                    # Multiple different region names found, so just pick one
+                    region1 = region1_candidates_2.pop()
+            assert region1, 'ERROR: Origin region not found for file "%s"' % filename
+
             for sheet in wb.sheets():
                 sheet_data = data[sheet.name]
-                for elem in parse_sheet(sheet):
+                for elem in parse_sheet(sheet, region1):
                     sheet_data.append(elem)
 
     return data
