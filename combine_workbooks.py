@@ -22,7 +22,7 @@ def parse_sheet(sheet, region1=None):
         c += 1
     while c < sheet.ncols and isfloat(sheet.cell_value(r, c)): 
         year_cols.append(c)
-        years.append(sheet.cell_value(r, c))
+        years.append(int(sheet.cell_value(r, c)))
         c += 1
 
     ## Iterate through rows ##
